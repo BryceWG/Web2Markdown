@@ -17,7 +17,7 @@ Return only the markdown content without any explanations or metadata.`;
   function loadSettings() {
     browser.storage.sync.get([
       'llmModel', 'llmEndpoint', 'llmApiKey', 'systemPrompt', 
-      'temperature', 'autoCopy', 'showNotifications', 'autoExtract'
+      'temperature', 'autoCopy', 'showNotifications', 'autoExtract', 'appendPageInfo'
     ]).then(result => {
       document.getElementById('llmEndpoint').value = result.llmEndpoint || 'https://api.openai.com/v1/chat/completions';
       document.getElementById('llmModel').value = result.llmModel || 'gpt-3.5-turbo';
@@ -27,6 +27,7 @@ Return only the markdown content without any explanations or metadata.`;
       document.getElementById('autoCopy').checked = result.autoCopy !== false;
       document.getElementById('showNotifications').checked = result.showNotifications !== false;
       document.getElementById('autoExtract').checked = result.autoExtract || false;
+      document.getElementById('appendPageInfo').checked = result.appendPageInfo || false;
     });
   }
 
@@ -40,7 +41,8 @@ Return only the markdown content without any explanations or metadata.`;
       temperature: parseFloat(document.getElementById('temperature').value),
       autoCopy: document.getElementById('autoCopy').checked,
       showNotifications: document.getElementById('showNotifications').checked,
-      autoExtract: document.getElementById('autoExtract').checked
+      autoExtract: document.getElementById('autoExtract').checked,
+      appendPageInfo: document.getElementById('appendPageInfo').checked
     };
 
     browser.storage.sync.set(settings).then(() => {

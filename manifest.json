@@ -15,6 +15,7 @@
     "storage",
     "notifications",
     "clipboardWrite",
+    "contextMenus",
     "https://*/*",
     "http://*/*"
   ],

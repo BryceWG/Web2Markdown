@@ -20,11 +20,13 @@ Return only the markdown content without any explanations or metadata.`,
     temperature: 0.3,
     autoCopy: true,
     showNotifications: true,
-    autoExtract: false
+    autoExtract: false,
+    appendPageInfo: false
   };
 
-  // Initialize default settings
+  // Initialize default settings and context menu
   browser.runtime.onInstalled.addListener(() => {
+    // Set default settings
     browser.storage.sync.get(Object.keys(DEFAULT_SETTINGS)).then(result => {
       const updates = {};
       Object.keys(DEFAULT_SETTINGS).forEach(key => {
@@ -36,6 +38,35 @@ Return only the markdown content without any explanations or metadata.`,
         browser.storage.sync.set(updates);
       }
     });
+
+    // Create context menu
+    browser.contextMenus.create({
+      id: 'web2markdown-convert',
+      title: '🔄 Convert to Markdown',
+      contexts: ['page', 'selection']
+    });
+  });
+
+  // Handle context menu clicks
+  browser.contextMenus.onClicked.addListener((info, tab) => {
+    if (info.menuItemId === 'web2markdown-convert') {
+      // Extract content from the active tab
+      browser.tabs.sendMessage(tab.id, {
+        action: 'extractContent'
+      }).then(response => {
+        if (response.success) {
+          convertToMarkdown(response.data);
+        }
+      }).catch(error => {
+        console.error('Context menu conversion error:', error);
+        browser.notifications.create({
+          type: 'basic',
+          iconUrl: 'icons/icon-48.png',
+          title: 'Web2Markdown Error',
+          message: 'Failed to extract content from page'
+        });
+      });
+    }
   });
 
   // Handle messages from content script and popup
@@ -60,7 +91,7 @@ Return only the markdown content without any explanations or metadata.`,
       // Get settings
       const settings = await browser.storage.sync.get([
         'llmModel', 'llmEndpoint', 'llmApiKey', 'systemPrompt', 
-        'temperature', 'autoCopy', 'showNotifications'
+        'temperature', 'autoCopy', 'showNotifications', 'appendPageInfo'
       ]);
 
       if (!settings.llmApiKey) {
@@ -109,7 +140,13 @@ Return only the markdown content without any explanations or metadata.`,
       }
 
       const data = await response.json();
-      const markdown = data.choices[0].message.content;
+      let markdown = data.choices[0].message.content;
+
+      // Append page info if enabled
+      if (settings.appendPageInfo) {
+        const pageInfo = `\n\n---\n**Source:** [${pageData.title}](${pageData.url})`;
+        markdown += pageInfo;
+      }
 
       // Copy to clipboard if enabled
       if (settings.autoCopy) {
