@@ -1,141 +1,80 @@
-# Web2Markdown - Firefox Extension
+# Web2Markdown
 
-A Firefox browser extension that converts webpage content to markdown format using LLM (Large Language Model) APIs.
+一款功能强大的浏览器扩展，可将任何网页内容通过大语言模型（LLM）转换为干净、可读的 Markdown 格式。
 
-## Features
+## 核心特性
 
-- 🔄 **One-click conversion**: Convert any webpage to clean markdown format
-- 🤖 **LLM Integration**: Supports multiple LLM providers (OpenAI, Anthropic, etc.)
-- ⚙️ **Customizable Settings**: Configure API endpoints, models, prompts, and behavior
-- 📋 **Clipboard Integration**: Automatically copy results to clipboard
-- 🔔 **System Notifications**: Get notified when conversion is complete
-- 🎯 **Smart Content Extraction**: Intelligently extracts main content while filtering out ads and navigation
+- **上下文菜单转换**  
+  提供上下文菜单选项"Convert to Markdown"，点击后将当前页面或选中的文本发送至后台脚本进行转换。  
+  _需要 `contextMenus` 权限。_
 
-## Installation
+- **弹出页面**  
+  打开一个弹出窗口，允许用户手动触发转换过程。  
+  功能：提供按钮访问设置，自动初始化页面信息，并手动开始转换。
 
-### Install from Firefox Add-ons Store
-*Coming soon...*
+- **选项页面**  
+  提供设置页面供用户配置 API 端点、模型、密钥、系统提示和其他行为选项。  
+  功能：保存设置，测试 API 连接，并显示最近使用的模型历史记录。
 
-### Manual Installation (Developer Mode)
+- **自动提取功能**  
+  可以选择是否在页面加载时自动提取内容并将其发送至后台处理。  
+  _需要 `storage` 权限。_
 
-1. Clone or download this repository
-2. Open Firefox and navigate to `about:debugging`
-3. Click "This Firefox" in the left sidebar
-4. Click "Load Temporary Add-on"
-5. Navigate to the extension folder and select `manifest.json`
+- **自动复制功能**  
+  完成转换后可以自动复制结果到剪贴板。  
+  _需要 `clipboardWrite` 权限。_
 
-## Setup
+- **通知功能**  
+  可以选择是否在转换过程中显示系统通知。  
+  _需要 `notifications` 权限。_
 
-1. **Install the extension** following the steps above
-2. **Configure API settings**:
-   - Click the extension icon in the toolbar
-   - Click "Settings" to open the options page
-   - Enter your LLM API details:
-     - API Endpoint (e.g., `https://api.openai.com/v1/chat/completions`)
-     - Model name (e.g., `gpt-3.5-turbo`)
-     - API Key
-   - Customize the system prompt if needed
-   - Adjust other settings as desired
-3. **Test the connection** using the "Test Connection" button
-4. **Save your settings**
+- **附加页面信息**  
+  可以选择是否在复制结果时附加页面标题和 URL。  
+  _需要 `activeTab` 权限。_
 
-## Usage
+- **系统提示配置**  
+  允许用户自定义系统提示，指导 AI 如何更好地提取和格式化内容。  
+  _默认提供的系统提示确保了 LLM 正确识别并格式化主要内容。_
 
-### Manual Conversion
-1. Navigate to any webpage
-2. Click the Web2Markdown extension icon
-3. Click "Convert to Markdown"
-4. Wait for the conversion to complete
-5. The result will be displayed and optionally copied to clipboard
+## 如何使用
 
-### Settings Options
-- **LLM Configuration**: Set your preferred API endpoint, model, and API key
-- **System Prompt**: Customize how the AI processes content
-- **Temperature**: Control the creativity/randomness of the output (0.0-2.0)
-- **Auto-copy**: Automatically copy results to clipboard
-- **Notifications**: Enable/disable system notifications
-- **Auto-extract**: Experimental feature to auto-convert on page load
+### 安装与快速启动
+1. 打开浏览器扩展管理界面。
+2. 添加并启用 Web2Markdown 扩展。
+3. 点击工具栏中的 Web2Markdown 图标打开弹出窗口。
 
-## Supported LLM Providers
+### 使用上下文菜单
+1. 右键点击需要转换的文本或网页。
+2. 选择"Convert to Markdown"选项。
+3. 根据选项设置，结果会自动复制到剪贴板或显示通知成功。
 
-- **OpenAI** (GPT-3.5, GPT-4)
-- **Anthropic** (Claude)
-- **Together AI** (Llama, other open models)
-- **Custom APIs** compatible with OpenAI format
+### 使用弹出窗口
+1. 点击浏览器工具栏中的 Web2Markdown 图标。
+2. 点击"Convert to Markdown"按钮。
+3. (可选) 根据选项设置，结果会被自动提取和复制到剪贴板或显示通知成功。
 
-## File Structure
+### 访问设置页面
+1. 在弹出窗口或上下文菜单中点击"⚙️ Settings"按钮。
+2. 在设置页面中配置各种选项：API 端点, 模型, API 密钥, 温度, 系统提示, 附加行为
+3. 点击"保存设置"保存配置。
+4. 点击"Test Connection"测试 API 链接是否正常。
 
-```
-Web2Markdown/
-├── manifest.json          # Extension manifest
-├── background.js          # Background script for API calls
-├── content.js            # Content script for page extraction
-├── popup.html            # Extension popup UI
-├── popup.js              # Popup functionality
-├── options.html          # Settings page
-├── options.js            # Settings functionality
-├── icons/                # Extension icons
-└── README.md             # This file
-```
+### 高级自定义系统提示
+1. 进入设置页面。
+2. 在"系统提示"文本区域自定义提示内容。
+3. 点击"保存设置"应用自定义提示。
 
-## Privacy & Security
+### 模型历史记录管理
+1. 在设置页面中查看最近使用的模型。
+2. 点击模型名称将当前设置更新为该模型。
+3. 点击"×"图标删除某个模型的历史记录。
 
-- All API keys are stored locally in your browser
-- No data is sent to our servers
-- Content is only sent to your configured LLM provider
-- The extension only accesses the current active tab when triggered
+## 配置选项
 
-## Development
+在选项页面中，您可以配置以下项目：
 
-### Prerequisites
-- Firefox Developer Edition (recommended)
-- Text editor or IDE
-
-### Development Setup
-1. Clone the repository
-2. Make your changes
-3. Load the extension in Firefox using `about:debugging`
-4. Test your changes
-5. Submit a pull request
-
-### Building for Production
-The extension is ready to use as-is. For distribution:
-1. Zip all files except README.md
-2. Submit to Firefox Add-ons store
-
-## Troubleshooting
-
-### Common Issues
-
-**"API key not configured"**
-- Go to Settings and enter your LLM provider API key
-
-**"Connection failed"**
-- Check your API endpoint URL
-- Verify your API key is correct
-- Ensure you have internet connection
-- Check if your API provider is experiencing issues
-
-**"Failed to extract content"**
-- Try refreshing the page
-- The page might be using dynamic content loading
-- Some pages may block content extraction
-
-**No conversion happening**
-- Make sure the extension has permission to access the current tab
-- Check browser console for error messages
-
-### Getting Help
-If you encounter issues:
-1. Check the browser console for error messages
-2. Verify your settings in the options page
-3. Test the API connection using the "Test Connection" button
-4. Open an issue on GitHub with details about the problem
-
-## License
-
-MIT License - see LICENSE file for details
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
+- **API 端点**: 设置用于转换的 LLM API 端点地址。
+- **模型**: 选择要使用的 LLM 模型。
+- **API 密钥**: 输入访问 LLM API 所需的认证密钥。
+- **系统提示**: 自定义系统提示来指导 AI 如何提取和格式化内容。
+- **附加行为**: 配置自动提取、自动复制、显示通知以及附加页面信息等行为选项。
