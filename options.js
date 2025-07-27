@@ -57,11 +57,11 @@ Return only the markdown content without any explanations or metadata.`;
     const model = document.getElementById('llmModel').value;
 
     if (!endpoint || !apiKey) {
-      showStatus('Please enter endpoint and API key first', 'error');
+      showTestStatus('Please enter endpoint and API key first', 'error');
       return;
     }
 
-    showStatus('Testing connection...', 'success');
+    showTestStatus('Testing connection...', 'success');
 
     try {
       const response = await fetch(endpoint, {
@@ -83,19 +83,31 @@ Return only the markdown content without any explanations or metadata.`;
       });
 
       if (response.ok) {
-        showStatus('Connection successful!', 'success');
+        showTestStatus('Connection successful!', 'success');
       } else {
         const errorData = await response.json();
-        showStatus(`Connection failed: ${response.status} - ${errorData.error?.message || 'Unknown error'}`, 'error');
+        showTestStatus(`Connection failed: ${response.status} - ${errorData.error?.message || 'Unknown error'}`, 'error');
       }
     } catch (error) {
-      showStatus(`Connection failed: ${error.message}`, 'error');
+      showTestStatus(`Connection failed: ${error.message}`, 'error');
     }
   }
 
   // Show status message
   function showStatus(message, type) {
     const statusEl = document.getElementById('statusMessage');
+    statusEl.textContent = message;
+    statusEl.className = `status ${type}`;
+    statusEl.style.display = 'block';
+    
+    setTimeout(() => {
+      statusEl.style.display = 'none';
+    }, 5000);
+  }
+
+  // Show test status message (near test button)
+  function showTestStatus(message, type) {
+    const statusEl = document.getElementById('testStatus');
     statusEl.textContent = message;
     statusEl.className = `status ${type}`;
     statusEl.style.display = 'block';

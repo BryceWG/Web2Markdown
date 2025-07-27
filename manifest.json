@@ -4,6 +4,12 @@
   "version": "1.0.0",
   "description": "Convert webpage content to markdown using LLM",
   
+  "applications": {
+    "gecko": {
+      "id": "web2markdown@example.com"
+    }
+  },
+  
   "permissions": [
     "activeTab",
     "storage",
