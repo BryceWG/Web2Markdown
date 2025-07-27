@@ -21,7 +21,8 @@ Return only the markdown content without any explanations or metadata.`,
     autoCopy: true,
     showNotifications: true,
     autoExtract: false,
-    appendPageInfo: false
+    appendPageInfo: false,
+    modelHistory: []
   };
 
   // Initialize default settings and context menu
@@ -98,15 +99,7 @@ Return only the markdown content without any explanations or metadata.`,
         throw new Error('API key not configured. Please set it in the extension options.');
       }
 
-      // Show processing notification
-      if (settings.showNotifications) {
-        browser.notifications.create({
-          type: 'basic',
-          iconUrl: 'icons/icon-48.png',
-          title: 'Web2Markdown',
-          message: 'Converting content to markdown...'
-        });
-      }
+      // Processing notification removed - only show completion/error notifications
 
       // Prepare the prompt
       const userPrompt = `Title: ${pageData.title}\nURL: ${pageData.url}\n\nContent:\n${pageData.content}`;

@@ -2,25 +2,54 @@
 (function() {
   'use strict';
 
-  const DEFAULT_SYSTEM_PROMPT = `You are a content extraction assistant. Convert the provided webpage content to clean, well-formatted markdown. Follow these guidelines:
+  const DEFAULT_SYSTEM_PROMPT = `You are an expert web content extractor and formatter. Your task is to analyze the raw content of a webpage (usually HTML or text extracted from it) and extract **only the core body content**. You must ignore all distracting elements not central to the main text and output the final result in clean, well-structured Markdown.
 
-1. Extract only the main content, ignoring navigation, advertisements, and sidebar content
-2. Preserve the hierarchical structure using appropriate markdown headers (# ## ###)
-3. Format lists, links, and emphasis properly
-4. Remove any redundant or promotional content
-5. Ensure the markdown is clean and readable
-6. Include the original title as the main header
+**Core Task & Analysis Logic:**
 
-Return only the markdown content without any explanations or metadata.`;
+1.  **Identify the Main Content:** Act like a reader who only wants to read the primary article. Accurately identify the main body of the page, such as a news article, blog post, product description, or tutorial.
+2.  **Filter Irrelevant Information:** Aggressively filter out all non-essential content.
+
+**List of Elements to Exclude:**
+
+*   **Navigational Elements:**
+    *   The main navigation bar at the top of the page (Header/Top Navigation Bar).
+    *   Sidebars containing navigation or functional widgets.
+    *   The footer section at the bottom of the page, including copyright, sitemap, contact info, etc.
+*   **Advertisements & Promotions:**
+    *   Any form of ad banners, pop-ups, or embedded promotional content.
+    *   "Sponsored Content," "Promotional Links," etc.
+*   **Social & Interactive Elements:**
+    *   User comment sections, message boards, or discussion forums.
+    *   Social media buttons like "Like," "Share," "Save," etc.
+*   **Meta-information & Boilerplate Text:**
+    *   Breadcrumbs.
+    *   Author bios (unless tightly integrated into the article's beginning or end as part of the content).
+    *   Lists of related articles, such as "You might also like," "Related Posts," or "Popular Recommendations."
+    *   Cookie consent banners, privacy policy links, etc.
+    *   Website logos, search bars.
+
+**Output Formatting Requirements (Markdown):**
+
+*   **Headings:** Preserve the original heading hierarchy. For example, \`<h1>\` maps to \`#\`, \`<h2>\` to \`##\`, and so on.
+*   **Paragraphs:** Maintain the original paragraph breaks, separated by a single blank line.
+*   **Lists:** Convert unordered lists (\`<ul>\`) and ordered lists (\`<ol>\`) to Markdown's \`-\` or \`1.\` format.
+*   **Text Formatting:** Preserve bold (\`<strong>\`, \`<b>\` -> \`**text**\`) and italic (\`<em>\`, \`<i>\` -> \`*text*\`).
+*   **Links:** Retain all hyperlinks, converting them to the \`[link text](URL)\` format.
+*   **Images:** Convert images to the \`![alt text](image URL)\` format. If alt text is missing, use "Image" or leave it empty.
+*   **Code Blocks:** For technical articles, it is crucial to preserve code blocks and wrap them in Markdown's backtick syntax (\`\`\`).
+*   **Blockquotes:** Convert blockquotes (\`<blockquote>\`) to Markdown's \`> \` format.
+
+**Final Goal:**
+Produce a clean, "Reader Mode" version of the content that retains its original structure (headings, lists, links, etc.). The output should be both pristine and easy to read or process further. Do not add any commentary or explanations not present in the original input. Begin the output directly with the Markdown content.`;
 
   // Load saved settings
   function loadSettings() {
     browser.storage.sync.get([
       'llmModel', 'llmEndpoint', 'llmApiKey', 'systemPrompt', 
-      'temperature', 'autoCopy', 'showNotifications', 'autoExtract', 'appendPageInfo'
+      'temperature', 'autoCopy', 'showNotifications', 'autoExtract', 'appendPageInfo', 'modelHistory'
     ]).then(result => {
       document.getElementById('llmEndpoint').value = result.llmEndpoint || 'https://api.openai.com/v1/chat/completions';
-      document.getElementById('llmModel').value = result.llmModel || 'gpt-3.5-turbo';
+      document.getElementById('llmModel').value = result.llmModel || 'gpt-4.1-nano';
       document.getElementById('llmApiKey').value = result.llmApiKey || '';
       document.getElementById('systemPrompt').value = result.systemPrompt || DEFAULT_SYSTEM_PROMPT;
       document.getElementById('temperature').value = result.temperature || 0.3;
@@ -28,27 +57,109 @@ Return only the markdown content without any explanations or metadata.`;
       document.getElementById('showNotifications').checked = result.showNotifications !== false;
       document.getElementById('autoExtract').checked = result.autoExtract || false;
       document.getElementById('appendPageInfo').checked = result.appendPageInfo || false;
+      
+      // Load model history
+      loadModelHistory(result.modelHistory || []);
     });
   }
 
   // Save settings
   function saveSettings() {
-    const settings = {
-      llmEndpoint: document.getElementById('llmEndpoint').value,
-      llmModel: document.getElementById('llmModel').value,
-      llmApiKey: document.getElementById('llmApiKey').value,
-      systemPrompt: document.getElementById('systemPrompt').value,
-      temperature: parseFloat(document.getElementById('temperature').value),
-      autoCopy: document.getElementById('autoCopy').checked,
-      showNotifications: document.getElementById('showNotifications').checked,
-      autoExtract: document.getElementById('autoExtract').checked,
-      appendPageInfo: document.getElementById('appendPageInfo').checked
-    };
+    const currentModel = document.getElementById('llmModel').value.trim();
+    const currentEndpoint = document.getElementById('llmEndpoint').value.trim();
+    
+    // Get current model history
+    browser.storage.sync.get(['modelHistory']).then(result => {
+      let modelHistory = result.modelHistory || [];
+      
+      // Add current model to history if it's not empty and not already in history
+      if (currentModel && !modelHistory.some(item => item.model === currentModel)) {
+        const modelEntry = {
+          model: currentModel,
+          endpoint: currentEndpoint,
+          timestamp: Date.now()
+        };
+        
+        // Add to beginning of array and limit to 10 items
+        modelHistory.unshift(modelEntry);
+        modelHistory = modelHistory.slice(0, 10);
+      }
+      
+      const settings = {
+        llmEndpoint: currentEndpoint,
+        llmModel: currentModel,
+        llmApiKey: document.getElementById('llmApiKey').value,
+        systemPrompt: document.getElementById('systemPrompt').value,
+        temperature: parseFloat(document.getElementById('temperature').value),
+        autoCopy: document.getElementById('autoCopy').checked,
+        showNotifications: document.getElementById('showNotifications').checked,
+        autoExtract: document.getElementById('autoExtract').checked,
+        appendPageInfo: document.getElementById('appendPageInfo').checked,
+        modelHistory: modelHistory
+      };
+      
+      browser.storage.sync.set(settings).then(() => {
+        showStatus('Settings saved successfully!', 'success');
+        loadModelHistory(modelHistory); // Refresh the model history display
+      }).catch(error => {
+        showStatus('Error saving settings: ' + error.message, 'error');
+      });
+    });
+  }
 
-    browser.storage.sync.set(settings).then(() => {
-      showStatus('Settings saved successfully!', 'success');
-    }).catch(error => {
-      showStatus('Error saving settings: ' + error.message, 'error');
+  // Load and display model history
+  function loadModelHistory(modelHistory) {
+    const historyContainer = document.getElementById('modelHistory');
+    historyContainer.innerHTML = '';
+    
+    modelHistory.forEach(entry => {
+      const modelBtn = createModelButton(entry);
+      historyContainer.appendChild(modelBtn);
+    });
+  }
+
+  // Create a model history button
+  function createModelButton(entry) {
+    const button = document.createElement('div');
+    button.className = 'model-btn';
+    
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'model-btn-name';
+    nameSpan.textContent = entry.model;
+    
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'model-btn-delete';
+    deleteBtn.innerHTML = '×';
+    deleteBtn.title = 'Remove from history';
+    
+    button.appendChild(nameSpan);
+    button.appendChild(deleteBtn);
+    
+    // Handle model selection
+    nameSpan.addEventListener('click', () => {
+      document.getElementById('llmModel').value = entry.model;
+      document.getElementById('llmEndpoint').value = entry.endpoint;
+    });
+    
+    // Handle model deletion
+    deleteBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      removeModelFromHistory(entry.model);
+    });
+    
+    return button;
+  }
+
+  // Remove model from history
+  function removeModelFromHistory(modelName) {
+    browser.storage.sync.get(['modelHistory']).then(result => {
+      let modelHistory = result.modelHistory || [];
+      modelHistory = modelHistory.filter(entry => entry.model !== modelName);
+      
+      browser.storage.sync.set({ modelHistory }).then(() => {
+        loadModelHistory(modelHistory);
+        showStatus('Model removed from history', 'success');
+      });
     });
   }
 
@@ -119,32 +230,9 @@ Return only the markdown content without any explanations or metadata.`;
     }, 5000);
   }
 
-  // Handle preset model buttons
-  function setupPresetButtons() {
-    document.querySelectorAll('.preset-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const model = e.target.getAttribute('data-model');
-        document.getElementById('llmModel').value = model;
-        
-        // Update endpoint for known providers
-        const endpointMap = {
-          'gpt-3.5-turbo': 'https://api.openai.com/v1/chat/completions',
-          'gpt-4': 'https://api.openai.com/v1/chat/completions',
-          'claude-3-sonnet': 'https://api.anthropic.com/v1/messages',
-          'llama-2-70b': 'https://api.together.xyz/inference'
-        };
-        
-        if (endpointMap[model]) {
-          document.getElementById('llmEndpoint').value = endpointMap[model];
-        }
-      });
-    });
-  }
-
   // Initialize
   document.addEventListener('DOMContentLoaded', () => {
     loadSettings();
-    setupPresetButtons();
     
     document.getElementById('saveSettings').addEventListener('click', saveSettings);
     document.getElementById('testConnection').addEventListener('click', testConnection);
