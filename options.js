@@ -2,7 +2,12 @@
 (function() {
   'use strict';
 
-  const DEFAULT_SYSTEM_PROMPT = `You are an expert web content extractor and formatter. Your task is to analyze the raw content of a webpage (usually HTML or text extracted from it) and extract **only the core body content**. You must ignore all distracting elements not central to the main text and output the final result in clean, well-structured Markdown.
+  const DEFAULT_SYSTEM_PROMPT = `You are a **high-fidelity** web content extraction and formatting expert. Your task is to analyze the provided raw webpage content and **fully extract, verbatim,** the core body content of the page. You must ignore all non-essential elements and output the result in clean, well-structured Markdown.
+
+**Core Principles (CRITICAL!):**
+
+1.  **NEVER SUMMARIZE OR ABBREVIATE:** Your job is **Extraction**, not **Summarization**. You must preserve every sentence and paragraph from the original main content. Think of yourself as an intelligent "copy-paste" tool whose only job is to remove irrelevant elements (like ads and navigation bars) and convert the format. **You must not, under any circumstances, alter or shorten the substance of the original text.** The length of your output should be nearly identical to the length of the original source's core content.
+2.  **EXTRACT, DON'T CREATE:** Do not add any headings, commentary, explanations, or introductory text that were not present in the original source. Your output must be derived entirely from the input.
 
 **Core Task & Analysis Logic:**
 
@@ -11,42 +16,31 @@
 
 **List of Elements to Exclude:**
 
-*   **Navigational Elements:**
-    *   The main navigation bar at the top of the page (Header/Top Navigation Bar).
-    *   Sidebars containing navigation or functional widgets.
-    *   The footer section at the bottom of the page, including copyright, sitemap, contact info, etc.
-*   **Advertisements & Promotions:**
-    *   Any form of ad banners, pop-ups, or embedded promotional content.
-    *   "Sponsored Content," "Promotional Links," etc.
-*   **Social & Interactive Elements:**
-    *   User comment sections, message boards, or discussion forums.
-    *   Social media buttons like "Like," "Share," "Save," etc.
-*   **Meta-information & Boilerplate Text:**
-    *   Breadcrumbs.
-    *   Author bios (unless tightly integrated into the article's beginning or end as part of the content).
-    *   Lists of related articles, such as "You might also like," "Related Posts," or "Popular Recommendations."
-    *   Cookie consent banners, privacy policy links, etc.
-    *   Website logos, search bars.
+*   **Navigational Elements:** The main header, sidebars, and footer.
+*   **Advertisements & Promotions:** Any form of ads, sponsored content, or promotional links.
+*   **Social & Interactive Elements:** User comment sections, share buttons, and like counters.
+*   **Meta-information & Boilerplate Text:** Breadcrumbs, author bios (unless integral to the content), lists of "related articles," and cookie consent banners.
+*   **Common Site Components:** Logos and search bars.
 
 **Output Formatting Requirements (Markdown):**
 
-*   **Headings:** Preserve the original heading hierarchy. For example, \`<h1>\` maps to \`#\`, \`<h2>\` to \`##\`, and so on.
-*   **Paragraphs:** Maintain the original paragraph breaks, separated by a single blank line.
-*   **Lists:** Convert unordered lists (\`<ul>\`) and ordered lists (\`<ol>\`) to Markdown's \`-\` or \`1.\` format.
-*   **Text Formatting:** Preserve bold (\`<strong>\`, \`<b>\` -> \`**text**\`) and italic (\`<em>\`, \`<i>\` -> \`*text*\`).
+*   **Headings:** Preserve the original heading hierarchy (\`#\`, \`##\`, \`###\`...).
+*   **Paragraphs:** Maintain original paragraph breaks, separated by a blank line.
+*   **Lists:** Convert to Markdown's \`-\` or \`1.\` format.
+*   **Text Formatting:** Preserve **bold** and *italic* text.
 *   **Links:** Retain all hyperlinks, converting them to the \`[link text](URL)\` format.
-*   **Images:** Convert images to the \`![alt text](image URL)\` format. If alt text is missing, use "Image" or leave it empty.
-*   **Code Blocks:** For technical articles, it is crucial to preserve code blocks and wrap them in Markdown's backtick syntax (\`\`\`).
-*   **Blockquotes:** Convert blockquotes (\`<blockquote>\`) to Markdown's \`> \` format.
+*   **Images:** Convert images to the \`![alt text](image URL)\` format.
+*   **Code Blocks:** It is crucial to preserve code blocks and wrap them in Markdown's \`\`\` syntax.
+*   **Blockquotes:** Convert to the \`> \` format.
 
 **Final Goal:**
-Produce a clean, "Reader Mode" version of the content that retains its original structure (headings, lists, links, etc.). The output should be both pristine and easy to read or process further. Do not add any commentary or explanations not present in the original input. Begin the output directly with the Markdown content.`;
+Produce a **complete and pristine** "Reader Mode" version of the content that retains its original structure. Begin the output directly with the Markdown content, without any preamble.`;
 
   // Load saved settings
   function loadSettings() {
     browser.storage.sync.get([
       'llmModel', 'llmEndpoint', 'llmApiKey', 'systemPrompt', 
-      'temperature', 'autoCopy', 'showNotifications', 'autoExtract', 'appendPageInfo', 'modelHistory'
+      'temperature', 'autoCopy', 'showNotifications', 'autoExtract', 'appendPageInfo', 'includeImages', 'modelHistory'
     ]).then(result => {
       document.getElementById('llmEndpoint').value = result.llmEndpoint || 'https://api.openai.com/v1/chat/completions';
       document.getElementById('llmModel').value = result.llmModel || 'gpt-4.1-nano';
@@ -57,6 +51,7 @@ Produce a clean, "Reader Mode" version of the content that retains its original 
       document.getElementById('showNotifications').checked = result.showNotifications !== false;
       document.getElementById('autoExtract').checked = result.autoExtract || false;
       document.getElementById('appendPageInfo').checked = result.appendPageInfo || false;
+      document.getElementById('includeImages').checked = result.includeImages !== false;
       
       // Load model history
       loadModelHistory(result.modelHistory || []);
@@ -95,6 +90,7 @@ Produce a clean, "Reader Mode" version of the content that retains its original 
         showNotifications: document.getElementById('showNotifications').checked,
         autoExtract: document.getElementById('autoExtract').checked,
         appendPageInfo: document.getElementById('appendPageInfo').checked,
+        includeImages: document.getElementById('includeImages').checked,
         modelHistory: modelHistory
       };
       

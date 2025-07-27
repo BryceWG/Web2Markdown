@@ -108,7 +108,7 @@
             }
           ],
           temperature: settings.temperature,
-          max_tokens: 4000
+          max_tokens: 32000
         })
       });
 
