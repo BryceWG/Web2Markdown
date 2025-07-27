@@ -4,9 +4,9 @@
   "version": "1.0.0",
   "description": "Convert webpage content to markdown using LLM",
   
-  "applications": {
+  "browser_specific_settings": {
     "gecko": {
-      "id": "web2markdown@example.com"
+      "id": "web2markdown@extension.com"
     }
   },
   

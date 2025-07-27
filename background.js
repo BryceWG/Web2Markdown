@@ -2,39 +2,23 @@
 (function() {
   'use strict';
 
-  // Default settings
-  const DEFAULT_SETTINGS = {
-    llmModel: 'gpt-3.5-turbo',
-    llmEndpoint: 'https://api.openai.com/v1/chat/completions',
-    llmApiKey: '',
-    systemPrompt: `You are a content extraction assistant. Convert the provided webpage content to clean, well-formatted markdown. Follow these guidelines:
-
-1. Extract only the main content, ignoring navigation, advertisements, and sidebar content
-2. Preserve the hierarchical structure using appropriate markdown headers (# ## ###)
-3. Format lists, links, and emphasis properly
-4. Remove any redundant or promotional content
-5. Ensure the markdown is clean and readable
-6. Include the original title as the main header
-
-Return only the markdown content without any explanations or metadata.`,
-    temperature: 0.3,
-    autoCopy: true,
-    showNotifications: true,
-    autoExtract: false,
-    appendPageInfo: false,
-    modelHistory: []
-  };
-
   // Initialize default settings and context menu
   browser.runtime.onInstalled.addListener(() => {
-    // Set default settings
-    browser.storage.sync.get(Object.keys(DEFAULT_SETTINGS)).then(result => {
+    browser.storage.sync.get([
+      'llmModel', 'llmEndpoint', 'llmApiKey', 'systemPrompt', 
+      'temperature', 'autoCopy', 'showNotifications', 'autoExtract', 
+      'appendPageInfo', 'modelHistory'
+    ]).then(result => {
       const updates = {};
-      Object.keys(DEFAULT_SETTINGS).forEach(key => {
-        if (result[key] === undefined) {
-          updates[key] = DEFAULT_SETTINGS[key];
-        }
-      });
+      
+      // Only set these basic defaults, let options.js handle UI-specific defaults
+      if (result.autoCopy === undefined) updates.autoCopy = true;
+      if (result.showNotifications === undefined) updates.showNotifications = true;
+      if (result.autoExtract === undefined) updates.autoExtract = false;
+      if (result.appendPageInfo === undefined) updates.appendPageInfo = false;
+      if (result.modelHistory === undefined) updates.modelHistory = [];
+      if (result.temperature === undefined) updates.temperature = 0.3;
+      
       if (Object.keys(updates).length > 0) {
         browser.storage.sync.set(updates);
       }
@@ -43,7 +27,7 @@ Return only the markdown content without any explanations or metadata.`,
     // Create context menu
     browser.contextMenus.create({
       id: 'web2markdown-convert',
-      title: '🔄 Convert to Markdown',
+      title: 'Convert to Markdown',
       contexts: ['page', 'selection']
     });
   });
