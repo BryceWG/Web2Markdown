@@ -4,12 +4,6 @@
   "version": "1.0.0",
   "description": "Convert webpage content to markdown using LLM",
   
-  "browser_specific_settings": {
-    "gecko": {
-      "id": "web2markdown@extension.com"
-    }
-  },
-  
   "permissions": [
     "activeTab",
     "storage",
@@ -33,7 +27,7 @@
     }
   ],
   
-  "browser_action": {
+  "action": {
     "default_popup": "popup.html",
     "default_title": "Convert to Markdown",
     "default_icon": {

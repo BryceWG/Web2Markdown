@@ -44,7 +44,7 @@ Produce a clean, "Reader Mode" version of the content that retains its original 
 
   // Load saved settings
   function loadSettings() {
-    browser.storage.sync.get([
+    chrome.storage.sync.get([
       'llmModel', 'llmEndpoint', 'llmApiKey', 'systemPrompt', 
       'temperature', 'autoCopy', 'showNotifications', 'autoExtract', 'appendPageInfo', 'modelHistory'
     ]).then(result => {
@@ -69,7 +69,7 @@ Produce a clean, "Reader Mode" version of the content that retains its original 
     const currentEndpoint = document.getElementById('llmEndpoint').value.trim();
     
     // Get current model history
-    browser.storage.sync.get(['modelHistory']).then(result => {
+    chrome.storage.sync.get(['modelHistory']).then(result => {
       let modelHistory = result.modelHistory || [];
       
       // Add current model to history if it's not empty and not already in history
@@ -98,7 +98,7 @@ Produce a clean, "Reader Mode" version of the content that retains its original 
         modelHistory: modelHistory
       };
       
-      browser.storage.sync.set(settings).then(() => {
+      chrome.storage.sync.set(settings).then(() => {
         showStatus('Settings saved successfully!', 'success');
         loadModelHistory(modelHistory); // Refresh the model history display
       }).catch(error => {
@@ -152,11 +152,11 @@ Produce a clean, "Reader Mode" version of the content that retains its original 
 
   // Remove model from history
   function removeModelFromHistory(modelName) {
-    browser.storage.sync.get(['modelHistory']).then(result => {
+    chrome.storage.sync.get(['modelHistory']).then(result => {
       let modelHistory = result.modelHistory || [];
       modelHistory = modelHistory.filter(entry => entry.model !== modelName);
       
-      browser.storage.sync.set({ modelHistory }).then(() => {
+      chrome.storage.sync.set({ modelHistory }).then(() => {
         loadModelHistory(modelHistory);
         showStatus('Model removed from history', 'success');
       });

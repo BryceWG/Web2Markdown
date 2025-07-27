@@ -3,8 +3,8 @@
   'use strict';
 
   // Initialize default settings and context menu
-  browser.runtime.onInstalled.addListener(() => {
-    browser.storage.sync.get([
+  chrome.runtime.onInstalled.addListener(() => {
+    chrome.storage.sync.get([
       'llmModel', 'llmEndpoint', 'llmApiKey', 'systemPrompt', 
       'temperature', 'autoCopy', 'showNotifications', 'autoExtract', 
       'appendPageInfo', 'modelHistory'
@@ -20,12 +20,12 @@
       if (result.temperature === undefined) updates.temperature = 0.3;
       
       if (Object.keys(updates).length > 0) {
-        browser.storage.sync.set(updates);
+        chrome.storage.sync.set(updates);
       }
     });
 
     // Create context menu
-    browser.contextMenus.create({
+    chrome.contextMenus.create({
       id: 'web2markdown-convert',
       title: 'Convert to Markdown',
       contexts: ['page', 'selection']
@@ -33,10 +33,10 @@
   });
 
   // Handle context menu clicks
-  browser.contextMenus.onClicked.addListener((info, tab) => {
+  chrome.contextMenus.onClicked.addListener((info, tab) => {
     if (info.menuItemId === 'web2markdown-convert') {
       // Extract content from the active tab
-      browser.tabs.sendMessage(tab.id, {
+      chrome.tabs.sendMessage(tab.id, {
         action: 'extractContent'
       }).then(response => {
         if (response.success) {
@@ -44,7 +44,7 @@
         }
       }).catch(error => {
         console.error('Context menu conversion error:', error);
-        browser.notifications.create({
+        chrome.notifications.create({
           type: 'basic',
           iconUrl: 'icons/icon-48.png',
           title: 'Web2Markdown Error',
@@ -55,14 +55,14 @@
   });
 
   // Handle messages from content script and popup
-  browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'convertToMarkdown') {
       convertToMarkdown(request.data).then(sendResponse);
       return true; // Keep the message channel open for async response
     }
     
     if (request.action === 'autoConvert') {
-      browser.storage.sync.get(['autoExtract']).then(result => {
+      chrome.storage.sync.get(['autoExtract']).then(result => {
         if (result.autoExtract) {
           convertToMarkdown(request.data);
         }
@@ -74,7 +74,7 @@
   async function convertToMarkdown(pageData) {
     try {
       // Get settings
-      const settings = await browser.storage.sync.get([
+      const settings = await chrome.storage.sync.get([
         'llmModel', 'llmEndpoint', 'llmApiKey', 'systemPrompt', 
         'temperature', 'autoCopy', 'showNotifications', 'appendPageInfo'
       ]);
@@ -132,7 +132,7 @@
 
       // Show success notification
       if (settings.showNotifications) {
-        browser.notifications.create({
+        chrome.notifications.create({
           type: 'basic',
           iconUrl: 'icons/icon-48.png',
           title: 'Web2Markdown',
@@ -152,7 +152,7 @@
       
       // Show error notification
       if (settings.showNotifications !== false) {
-        browser.notifications.create({
+        chrome.notifications.create({
           type: 'basic',
           iconUrl: 'icons/icon-48.png',
           title: 'Web2Markdown Error',

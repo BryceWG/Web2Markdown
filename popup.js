@@ -9,7 +9,7 @@
   document.addEventListener('DOMContentLoaded', async () => {
     try {
       // Get current tab info
-      const tabs = await browser.tabs.query({ active: true, currentWindow: true });
+      const tabs = await chrome.tabs.query({ active: true, currentWindow: true });
       currentTab = tabs[0];
       
       // Update page info
@@ -36,7 +36,7 @@
 
   async function checkConfiguration() {
     try {
-      const settings = await browser.storage.sync.get(['llmApiKey']);
+      const settings = await chrome.storage.sync.get(['llmApiKey']);
       if (!settings.llmApiKey) {
         showStatus('API key not configured. Click Settings to configure.', 'error');
         document.getElementById('convertBtn').disabled = true;
@@ -59,7 +59,7 @@
       document.getElementById('convertBtn').innerHTML = '<span class="loading"></span>Converting...';
 
       // Extract content from the page
-      const response = await browser.tabs.sendMessage(currentTab.id, {
+      const response = await chrome.tabs.sendMessage(currentTab.id, {
         action: 'extractContent'
       });
 
@@ -71,7 +71,7 @@
       showStatus('Converting to markdown...', 'processing');
 
       // Send to background script for LLM processing
-      const result = await browser.runtime.sendMessage({
+      const result = await chrome.runtime.sendMessage({
         action: 'convertToMarkdown',
         data: response.data
       });
@@ -131,7 +131,7 @@
   }
 
   function openSettings() {
-    browser.runtime.openOptionsPage();
+    chrome.runtime.openOptionsPage();
     window.close();
   }
 

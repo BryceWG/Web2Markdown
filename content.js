@@ -56,7 +56,7 @@
   }
 
   // Listen for messages from popup/background
-  browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === 'extractContent') {
       try {
         const content = extractPageContent();
@@ -75,12 +75,12 @@
   });
 
   // Auto-extract content if enabled in settings
-  browser.storage.sync.get(['autoExtract']).then(result => {
+  chrome.storage.sync.get(['autoExtract']).then(result => {
     if (result.autoExtract) {
       // Wait a bit for the page to fully load
       setTimeout(() => {
         const content = extractPageContent();
-        browser.runtime.sendMessage({
+        chrome.runtime.sendMessage({
           action: 'autoConvert',
           data: content
         });
